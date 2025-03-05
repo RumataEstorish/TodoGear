@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns:tizen="http://tizen.org/ns/widgets" xmlns="http://www.w3.org/ns/widgets" id="https://sites.google.com/view/gearsoftware/applications/todogear" version="2.0.1" viewmodes="maximized">
+    <access origin="*" subdomains="true"></access>
+    <tizen:application id="5gMZi7Z8Vp.Todogear" package="5gMZi7Z8Vp" required_version="2.2"/>
+    <author href="https://sites.google.com/view/gearsoftware/applications/todogear" email="rumataestorish@yandex.ru">Rumata</author>
+    <content src="index.html"/>
+    <description>Unofficial Toodledo client</description>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <icon src="icon.png"/>
+    <tizen:metadata key="AccessoryServicesLocation" value="res/xml/accessoryservices.xml"/>
+    <tizen:metadata key="master_app_name" value="GearHub"/>
+    <tizen:metadata key="master_app_packagename" value="petbotproject.gearhub"/>
+    <tizen:metadata key="master_app_min_version" value="1"/>
+    <tizen:metadata key="master_app_playstore_deeplink" value="https://play.google.com/store/apps/details?id=petbotproject.gearhub"/>
+    <tizen:metadata key="master_app_auto_uninstallation" value="no"/>
+    <name>TodoGear</name>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/accessoryprotocol"/>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
+    <tizen:privilege name="http://tizen.org/privilege/unlimitedstorage"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:profile name="wearable"/>
+    <tizen:setting background-support="enable" encryption="disable" hwkey-event="enable"/>
+</widget>

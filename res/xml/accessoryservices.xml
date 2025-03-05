@@ -1,0 +1,35 @@
+<resources>
+    <application name="TodoGearConsumers" >
+        <serviceProfile
+            id="/system/todogear"
+            name="TodoGear"
+            role="consumer"
+            serviceTimeout="25"
+            serviceLimit="ANY"
+            version="2.0" >
+            <supportedTransports>
+                <transport type="TRANSPORT_BT" />
+                <transport type="TRANSPORT_WIFI" />
+            </supportedTransports>
+
+           <serviceChannel
+                id="98"
+                dataRate="high"
+                priority="high"
+                reliability="enable" >
+            </serviceChannel>
+           <serviceChannel
+                id="99"
+                dataRate="high"
+                priority="high"
+                reliability="enable" >
+            </serviceChannel>
+            <serviceChannel
+                id="100"
+                dataRate="low"
+                priority="low"
+                reliability="enable" >
+            </serviceChannel>
+        </serviceProfile>
+    </application>
+</resources>

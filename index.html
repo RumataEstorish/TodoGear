@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport"
+	content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="description" content="Unofficial Toodledo client" />
+
+<title>TodoGear</title>
+
+<link rel="stylesheet" href="lib/tau/wearable/theme/default/tau.min.css" />
+<link rel="stylesheet" media="all and (-tizen-geometric-shape: circle)"
+	href="lib/tau/wearable/theme/default/tau.circle-patch-0.0.0.1.min.css">
+
+<link rel="stylesheet" type="text/css" href="css/style.css">
+
+
+<script type="text/javascript" src="js/jquery-3.5.1.min.js"></script>
+<script type="text/javascript" src="js/utils-2.1.5.0.js"></script>
+<script type="text/javascript" src="js/input/typeGear-1.0.0.js"></script>
+<script type="text/javascript" src="js/input/input-1.0.4.2.js"></script>
+
+<script type="text/javascript" src="js/ui/swipeList-1.0.0.1.js"></script>
+<script type="text/javascript" src="js/dexie-2.0.4.min.js"></script>
+<script type="text/javascript" src="js/view.js"></script>
+<script type="text/javascript" src="js/log-1.0.1.1.js"></script>
+<script type="text/javascript" src="js/GearHttp/androidHttpRequest.js"></script>
+<script type="text/javascript" src="js/GearHttp/requestHeader.js"></script>
+<script type="text/javascript" src="js/GearHttp/androidRequestData.js"></script>
+<script type="text/javascript" src="js/GearHttp/gearHttp-1.3.0.0.js"></script>
+
+<script type="text/javascript" src="js/sap-2.0.3.5.js"></script>
+<script type="text/javascript" src="lib/tau/wearable/js/tau.min.js"></script>
+<script type="text/javascript" src="js/ui/contextMenu-1.0.1.1.js"></script>
+<script type="text/javascript" src="js/ui/actionMenu-2.1.0.5.js"></script>
+<script type="text/javascript" src="js/ui/viewMenu.js"></script>
+<script type="text/javascript" src="js/ui/toastMessage-1.1.1.js"></script>
+<script type="text/javascript" src="js/toodledo/toodledo.js"></script>
+<script type="text/javascript" src="js/toodledo/toodledo.context.js"></script>
+<script type="text/javascript" src="js/toodledo/toodledo.folders.js"></script>
+<script type="text/javascript" src="js/toodledo/toodledo.tasks.js"></script>
+<script type="text/javascript" src="js/toodledo/toodledo.syncTime.js"></script>
+<script type="text/javascript" src="js/editTaskData.js"></script>
+<script type="text/javascript" src="js/main.js"></script>
+
+<script type="text/javascript" src="js/ui/circle-helper-1.0.0.3.js"></script>
+
+<script src="locales/en-us/language.js"></script>
+<script src="language.js"></script>
+</head>
+
+<body>
+	<div class="ui-page" id="pageCircleProgressBar"
+		data-enable-page-scroll="false">
+		<div class="ui-content content-padding">
+			<div class="result" id="result"></div>
+			<progress class="ui-circle-progress" id="circleprogress" max="100"
+				value="20"></progress>
+			<!-- <div id="circleProgressDescription" class="ui-processing-text"></div> -->
+		</div>
+	</div>
+
+	<div class="ui-page ui-page-active" id="smallProcessingPage">
+		<div class="ui-content content-padding">
+			<div class="small-processing-container">
+				<div class="ui-processing" style="visibility: hidden;"></div>
+				<div id="smallProcessingDescription" class="ui-processing-text"></div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			(function() {
+				var page = document.getElementById("smallProcessingPage");
+				page.addEventListener("pageshow", function(event) {
+					var page = event.target, processing = page.querySelector(".ui-processing");
+					processing.style.visibility = "";
+				}, false);
+
+				page.addEventListener("pagebeforehide", function(event) {
+					var page = event.target, processing = page.querySelector(".ui-processing");
+					processing.style.visibility = "hidden";
+				}, false);
+			}());
+		</script>
+
+	</div>
+
+	<div id="mainMenuPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content"></div>
+	</div>
+
+	<div id="taskEditPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li class="li-has-multiline" id="taskContent"
+					onclick="editTaskContent()"><label><span
+						class="ui-li-sub-text li-text-sub"></span></label></li>
+				<li class="li-has-multiline" id="taskProject"
+					onclick="pickTaskProject()"><label><span
+						class="ui-li-sub-text li-text-sub"></span></label></li>
+				<li class="li-has-multiline" id="taskStatus" onclick="pickStatus()"><label><span
+						class="ui-li-sub-text li-text-sub"></span></label></li>
+				<li class="li-has-multiline" id="taskContext"
+					onclick="pickContext()"><label><span
+						class="ui-li-sub-text li-text-sub"></span></label></li>
+				<li class="li-has-multiline" id="taskDate" onclick="pickTaskDate()"><label><span
+						class="ui-li-sub-text li-text-sub"></span></label></li>
+			</ul>
+		</div>
+		<footer class="ui-footer ui-bottom-button">
+			<button id="okButton" onclick="editTaskConfirm()" class="ui-btn"></button>
+		</footer>
+	</div>
+
+	<div id="statusPickPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li id="statusNone" onclick="setStatus(0)"></li>
+				<li id="statusNextAction" onclick="setStatus(1)"></li>
+				<li id="statusActive" onclick="setStatus(2)"></li>
+				<li id="statusPlanning" onclick="setStatus(3)"></li>
+				<li id="statusDelegated" onclick="setStatus(4)"></li>
+				<li id="statusWaiting" onclick="setStatus(5)"></li>
+				<li id="statusHold" onclick="setStatus(6)"></li>
+				<li id="statusPostponed" onclick="setStatus(7)"></li>
+				<li id="statusSomeday" onclick="setStatus(8)"></li>
+				<li id="statusCanceled" onclick="setStatus(9)"></li>
+				<li id="statusReference" onclick="setStatus(10)"></li>
+			</ul>
+		</div>
+	</div>
+
+	<div id="contextPickPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+			</ul>
+		</div>
+	</div>
+
+	<input id="dateInput" style="visibility: hidden; width: 50px"
+		type="date" />
+
+	<div id="dueDatePage" class="ui-page">
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li id="todayDate" onclick="confirmDate('TODAY')"></li>
+				<li id="tomorrowDate" onclick="confirmDate('TOMORROW')"></li>
+				<li id="nextWeekDate" onclick="confirmDate('NEXT_WEEK')"></li>
+				<li id="pickDate" onclick="pickDate()"></li>
+				<li id="removeDate" onclick="confirmDate('REMOVE')"></li>
+			</ul>
+		</div>
+	</div>
+
+
+	<div id="postponePage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li id="todayPostpone" onclick="postponeDate('TODAY')"></li>
+				<li id="tomorrowPostpone" onclick="postponeDate('TOMORROW')"></li>
+				<li id="nextWeekPostpone" onclick="postponeDate('NEXT_WEEK')"></li>
+				<li id="pickDatePostpone" onclick="pickDatePostpone()"></li>
+				<li id="removeDatePostpone" onclick="postponeDate('REMOVE')"></li>
+			</ul>
+		</div>
+	</div>
+
+	<div id="tasksPage" class="ui-page">
+		<header class="ui-header ui-has-more">
+			<h2 class="ui-title"></h2>
+			<button type="button" style="z-index: 50"
+				onclick="openMainMenuClick()" class="ui-more ui-icon-overflow"></button>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview ui-swipelist-list">
+
+			</ul>
+			<div class="ui-swipelist">
+				<div class="ui-swipelist-left">
+					<div class="ui-swipelist-icon"></div>
+					<div id="swipeComplete" class="ui-swipelist-text">Complete</div>
+				</div>
+				<div class="ui-swipelist-right">
+					<div class="ui-swipelist-icon"></div>
+					<div id="swipeSchedule" class="ui-swipelist-text">Schedule</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="taskProcessing" class="ui-processing ui-processing-full-size"></div>
+	</div>
+
+	<div id="projectsPage" class="ui-page">
+		<header class="ui-header ui-has-more">
+			<h2 class="ui-title"></h2>
+			<button type="button" style="z-index: 50"
+				onclick="openMainMenuClick()" class="ui-more ui-icon-overflow"></button>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+
+			</ul>
+		</div>
+	</div>
+
+	<div id="pickProjectsPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+
+			</ul>
+		</div>
+	</div>
+
+	<div id="statusesPage" class="ui-page">
+		<header class="ui-header ui-has-more">
+			<h2 class="ui-title"></h2>
+			<button type="button" style="z-index: 50"
+				onclick="openMainMenuClick()" class="ui-more ui-icon-overflow"></button>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li class="li-has-multiline" id="statusNone" onclick="openStatus(0)"><a
+					href="#"><span class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusNextAction"
+					onclick="openStatus(1)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusActive"
+					onclick="openStatus(2)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusPlanning"
+					onclick="openStatus(3)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusDelegated"
+					onclick="openStatus(4)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusWaiting"
+					onclick="openStatus(5)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusHold" onclick="openStatus(6)"><a
+					href="#"><span class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusPostponed"
+					onclick="openStatus(7)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusSomeday"
+					onclick="openStatus(8)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusCanceled"
+					onclick="openStatus(9)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="statusReference"
+					onclick="openStatus(10)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+			</ul>
+		</div>
+	</div>
+
+	<div id="labelsPage" class="ui-page">
+		<header class="ui-header ui-has-more">
+			<h2 class="ui-title"></h2>
+			<button type="button" style="z-index: 50"
+				onclick="openMainMenuClick()" class="ui-more ui-icon-overflow"></button>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+
+			</ul>
+		</div>
+	</div>
+
+	<div id="priorityPage" class="ui-page">
+		<header class="ui-header ui-has-more">
+			<h2 class="ui-title"></h2>
+			<button type="button" style="z-index: 50"
+				onclick="openMainMenuClick()" class="ui-more ui-icon-overflow"></button>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li class="li-has-multiline" id="priorityTop"
+					onclick="openPriority(3)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="priorityHigh"
+					onclick="openPriority(2)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="priorityMedium"
+					onclick="openPriority(1)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="priorityLow"
+					onclick="openPriority(0)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+				<li class="li-has-multiline" id="priorityNegative"
+					onclick="openPriority(-1)"><a href="#"><span
+						class="ui-li-sub-text li-text-sub"></span></a></li>
+			</ul>
+		</div>
+	</div>
+
+
+	<div id="settingsPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li class="li-has-multiline" onclick="changeStartupDate()"><a
+					href="#" id="startupPageLabel"><span
+						class="ui-li-sub-text li-text-sub">Today</span></a></li>
+			</ul>
+		</div>
+	</div>
+
+	<div id="chooseStartupPage" class="ui-page">
+		<header class="ui-header">
+			<h2 class="ui-title"></h2>
+		</header>
+		<div class="ui-content">
+			<ul class="ui-listview">
+				<li class="li-has-radio"><label id="todayStartup"><input
+						name="startup" type="radio" onclick="changeStartupClick('TODAY')" /></label></li>
+				<li class="li-has-radio"><label id="nextWeekStartup"><input
+						name="startup" type="radio"
+						onclick="changeStartupClick('NEXT_WEEK')" /></label></li>
+				<li class="li-has-radio"><label id="projectsStartup"><input
+						name="startup" type="radio"
+						onclick="changeStartupClick('PROJECTS')" /></label></li>
+				<li class="li-has-radio"><label id="labelsStartup"><input
+						name="startup" type="radio" onclick="changeStartupClick('LABELS')" /></label></li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>
